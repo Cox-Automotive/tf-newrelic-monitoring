@@ -1,7 +1,7 @@
 ################################################################################
 # VARIABLES
 ################################################################################
-variable "config" []
+variable "config" {}
 variable "should_create" {
   default = true
 }
@@ -38,7 +38,10 @@ locals {
   }
   translated_locations = [for l in var.config["locations"] : lookup(local.location_map, l)]
   type_map = {
-    "PING" = "SIMPLE"
+    "PING"             = "SIMPLE"
+    "Simple browser"   = "BROWSER"
+    "Scripted browser" = "SCRIPT_BROWSER"
+    "API test"         = "SCRIPT_API"
   }
   translated_type = lookup(local.type_map, var.config["type"], var.config["type"])
 }
@@ -47,9 +50,9 @@ locals {
 # RESOURCES
 ################################################################################
 resource "newrelic_synthetics_monitor" "monitor" {
-  count = var.should_create ? 1 : 0
-  type      = var.config["synthetic_type"] //required; ping == simple
-  name      = var.config["name"] //required
+  count     = var.should_create ? 1 : 0
+  type      = var.config["type"]      //required; ping == simple
+  name      = var.config["name"]      //required
   frequency = var.config["frequency"] //required
   locations = local.translated_locations
   status    = var.config["status"] // required
@@ -57,11 +60,11 @@ resource "newrelic_synthetics_monitor" "monitor" {
   sla_threshold = var.config["sla_threshold"] //optional
 
   // valid only if type == simple|browser
-  uri                         = var.config["uri"] // optional
-  validation_string           = var.config["validation_string"] //optional
-  verify_ssl                  = var.config["verify_ssl"] //optional
-  bypass_head_request         = var.config["bypass_head_request"] //optional
-  treat_redirected_as_failure = var.config["fail_on_redirect"] //optional
+  uri                       = var.config.type_config["uri"]                 // optional
+  validation_string         = var.config.type_config["validation_string"]   //optional
+  verify_ssl                = var.config.type_config["verify_ssl"]          //optional
+  bypass_head_request       = var.config.type_config["bypass_head_request"] //optional
+  treat_redirect_as_failure = var.config.type_config["fail_on_redirect"]    //optional
 }
 
 resource "newrelic_synthetics_alert_condition" "alert" {

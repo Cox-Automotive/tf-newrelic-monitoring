@@ -23,11 +23,11 @@ module "alert_condition" {
     locations = var.config["locations"]
     status    = var.config["status"]
 
-    sla_threshold = var.config["sla_threshold"]
+    sla_threshold = lookup(var.config, "sla_threshold", 7)
 
     type_config = {
       uri                 = var.config["uri"]
-      validation_string   = var.config["validation_string"]
+      validation_string   = lookup(var.config, "validation_string", "")
       verify_ssl          = lookup(var.config, "verify_ssl", false)
       bypass_head_request = lookup(var.config, "bypass_head_request", false)
       fail_on_redirect    = lookup(var.config, "fail_on_redirect", false)
